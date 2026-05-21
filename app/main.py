@@ -69,10 +69,14 @@ def gallery(property_id: int, request: Request, db: Session = Depends(get_db)):
     realtor_license_number = "CA-987654"
     realtor_logo_url = None
 
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "property": db_property,
-        "image_pairs": image_pairs,
-        "realtor_license_number": realtor_license_number,
-        "realtor_logo_url": realtor_logo_url
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "request": request,
+            "property": db_property,
+            "image_pairs": image_pairs,
+            "realtor_license_number": realtor_license_number,
+            "realtor_logo_url": realtor_logo_url
+        }
+    )
