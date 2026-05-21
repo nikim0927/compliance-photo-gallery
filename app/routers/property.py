@@ -2,7 +2,7 @@ import os
 import shutil
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from app.models.schemas import Property, PropertyCreate, ImagePair, ImagePairCreate, ImagePairResponse
+from app.models.schemas import Property, PropertyCreate, ImagePair, ImagePairCreate, ImagePairResponse, DescriptionRequest
 from app.database import models
 from app.database.connection import get_db
 from app.auth import get_current_user
@@ -92,3 +92,37 @@ def get_image_pairs(property_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Property not found")
     
     return db_property.image_pairs
+
+@router.post("/{property_id}/generate-description")
+def generate_description(property_id: int, request: DescriptionRequest, db: Session = Depends(get_db)):
+    db_property = db.query(models.Property).filter(models.Property.id == property_id).first()
+    if db_property is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    address = db_property.address
+    features_str = ", ".join(request.features) if request.features else "several high-end amenities"
+    
+    desc = f"Welcome to the exquisite luxury property at {address}. This stunning estate boasts highly sought-after features including {features_str}. Elegantly designed with unparalleled attention to detail, this home offers a perfect blend of modern sophistication and timeless charm. From the spacious open-concept living areas to the meticulously landscaped grounds, every aspect of this property has been crafted for the ultimate luxury lifestyle. Experience comfort, privacy, and prestige in this magnificent residence. Your dream home awaits."
+    
+    return {"description": desc}
+
+@router.post("/{property_id}/audit-compliance")
+def audit_compliance(property_id: int, db: Session = Depends(get_db)):
+    db_property = db.query(models.Property).filter(models.Property.id == property_id).first()
+    if db_property is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    manual_review_required = False
+    structural_keywords = ["removed wall", "changed window", "removed power line", "structural edit"]
+    
+    for pair in db_property.image_pairs:
+        if not pair.is_structural_change:
+            alt_type = (pair.alteration_type or "").lower()
+            for kw in structural_keywords:
+                if kw in alt_type:
+                    manual_review_required = True
+                    break
+        if manual_review_required:
+            break
+            
+    return {"manual_review_required": manual_review_required}

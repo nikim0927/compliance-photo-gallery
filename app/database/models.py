@@ -10,6 +10,7 @@ class Property(Base):
     address = Column(String, index=True)
     realtor_id = Column(Integer, index=True)
     price = Column(Float)
+    views = Column(Integer, default=0)
 
     image_pairs = relationship("ImagePair", back_populates="property")
 

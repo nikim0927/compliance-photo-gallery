@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from app.routers import property
 from app.database.connection import engine, Base, get_db
 from app.database import models
-from app.models.schemas import UserCreate, User, UserResponse, Token
-from app.auth import get_password_hash, verify_password, create_access_token, fake_users_db, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.models.schemas import UserCreate, User, UserResponse, Token, DashboardProperty
+from app.auth import get_password_hash, verify_password, create_access_token, fake_users_db, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_user
 from datetime import timedelta
 import os
 
@@ -58,11 +58,20 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
 def read_root():
     return {"message": "Compliance Photo Gallery API is running"}
 
+@app.get("/dashboard", response_model=list[DashboardProperty])
+def dashboard(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    properties = db.query(models.Property).all()
+    return properties
+
 @app.get("/gallery/{property_id}")
 def gallery(property_id: int, request: Request, db: Session = Depends(get_db)):
     db_property = db.query(models.Property).filter(models.Property.id == property_id).first()
     if db_property is None:
         raise HTTPException(status_code=404, detail="Property not found")
+    
+    db_property.views += 1
+    db.commit()
+    db.refresh(db_property)
     
     image_pairs = db_property.image_pairs
     

@@ -44,6 +44,16 @@ class PropertyCreate(BaseModel):
 
 class Property(PropertyCreate):
     id: int
+    views: int = 0
 
     class Config:
         from_attributes = True
+
+class DescriptionRequest(BaseModel):
+    features: list[str]
+
+class DashboardProperty(BaseModel):
+    id: int
+    address: str
+    price: float
+    views: int

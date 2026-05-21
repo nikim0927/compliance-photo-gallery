@@ -164,7 +164,13 @@
 
     <header class="header">
         <h1>{{ property.address }}</h1>
-        <p>${{ "{:,.2f}".format(property.price) }}</p>
+        <p>
+            {% if property.price is not none %}
+                ${{ "{:,.2f}".format(property.price) }}
+            {% else %}
+                Price Upon Request
+            {% endif %}
+        </p>
     </header>
 
     <div class="container">
@@ -178,11 +184,11 @@
                 <div class="image-pair-card">
                     <div class="images-container">
                         <div class="image-box">
-                            <img src="/{{ pair.original_url }}" alt="Original Property Image">
+                            <img src="/{{ pair.original_url.lstrip('/') }}" alt="Original Property Image">
                             <span class="image-label">Original Unedited</span>
                         </div>
                         <div class="image-box">
-                            <img src="/{{ pair.edited_url }}" alt="Edited Property Image">
+                            <img src="/{{ pair.edited_url.lstrip('/') }}" alt="Edited Property Image">
                             <span class="image-label">Digitally Altered</span>
                         </div>
                     </div>
@@ -203,11 +209,17 @@
                         </div>
                         <div class="detail-item">
                             <h4>AI Confidence Score</h4>
-                            <p>{{ "{:.1f}%".format(pair.ai_confidence_score * 100) }}</p>
+                            <p>
+                                {% if pair.ai_confidence_score is not none %}
+                                    {{ "{:.1f}%".format(pair.ai_confidence_score * 100) }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
                         </div>
                         <div class="detail-item">
                             <h4>Compliance ID</h4>
-                            <p>{{ pair.compliance_id }}</p>
+                            <p>{{ pair.compliance_id or "Pending" }}</p>
                         </div>
                     </div>
                 </div>
@@ -222,8 +234,8 @@
 
     <footer class="footer">
         <div class="realtor-info">
-            <h3>Presented by Realtor #{{ property.realtor_id }}</h3>
-            <p>License: {{ realtor_license_number }}</p>
+            <h3>Presented by {% if property.realtor_id %}Realtor #{{ property.realtor_id }}{% else %}Luxe Realty{% endif %}</h3>
+            <p>License: {{ realtor_license_number or "Pending" }}</p>
         </div>
         <div class="realtor-logo">
             {% if realtor_logo_url %}
