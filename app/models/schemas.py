@@ -1,5 +1,23 @@
 from pydantic import BaseModel
 
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    realtor_license_number: str
+
+class User(BaseModel):
+    username: str
+    hashed_password: str
+    realtor_license_number: str
+
+class UserResponse(BaseModel):
+    username: str
+    realtor_license_number: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
 class ImagePairCreate(BaseModel):
     original_url: str
     edited_url: str
