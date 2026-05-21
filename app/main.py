@@ -1,11 +1,15 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 from app.routers import property
-from app.database.connection import engine, Base
+from app.database.connection import engine, Base, get_db
 from app.database import models
 from app.models.schemas import UserCreate, User, UserResponse, Token
 from app.auth import get_password_hash, verify_password, create_access_token, fake_users_db, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta
+import os
 
 Base.metadata.create_all(bind=engine)
 
@@ -13,6 +17,11 @@ app = FastAPI(
     title="Compliance Photo Gallery API",
     description="API for managing compliance photo gallery"
 )
+
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+templates = Jinja2Templates(directory="app/templates")
 
 app.include_router(property.router)
 
@@ -48,3 +57,22 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
 @app.get("/")
 def read_root():
     return {"message": "Compliance Photo Gallery API is running"}
+
+@app.get("/gallery/{property_id}")
+def gallery(property_id: int, request: Request, db: Session = Depends(get_db)):
+    db_property = db.query(models.Property).filter(models.Property.id == property_id).first()
+    if db_property is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    image_pairs = db_property.image_pairs
+    
+    realtor_license_number = "CA-987654"
+    realtor_logo_url = None
+
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "property": db_property,
+        "image_pairs": image_pairs,
+        "realtor_license_number": realtor_license_number,
+        "realtor_logo_url": realtor_logo_url
+    })

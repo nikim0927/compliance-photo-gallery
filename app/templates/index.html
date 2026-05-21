@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Gallery | {{ property.address }}</title>
+    <style>
+        :root {
+            --primary: #1e293b;
+            --secondary: #94a3b8;
+            --accent: #d4af37;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-light: #64748b;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            border-bottom: 4px solid var(--accent);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        .header p {
+            margin: 10px 0 0;
+            font-size: 1.25rem;
+            color: var(--accent);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .disclosure {
+            background-color: #fefce8;
+            border-left: 4px solid #eab308;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            color: #854d0e;
+            font-size: 0.95rem;
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+        }
+        .image-pair-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .images-container {
+            display: flex;
+            flex-direction: column;
+        }
+        @media (min-width: 768px) {
+            .images-container {
+                flex-direction: row;
+            }
+        }
+        .image-box {
+            flex: 1;
+            position: relative;
+        }
+        .image-box img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            display: block;
+        }
+        .image-label {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(30, 41, 59, 0.85);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            backdrop-filter: blur(4px);
+        }
+        .pair-details {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            background: #fafafa;
+            border-top: 1px solid #eee;
+        }
+        .detail-item h4 {
+            margin: 0 0 5px;
+            color: var(--text-light);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .detail-item p {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .structural-yes { background: #fee2e2; color: #b91c1c; }
+        .structural-no { background: #dcfce3; color: #15803d; }
+        .footer {
+            background-color: var(--primary);
+            color: white;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .realtor-info h3 {
+            margin: 0 0 5px 0;
+            color: var(--accent);
+            font-weight: 400;
+        }
+        .realtor-info p {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+        .logo {
+            max-height: 60px;
+        }
+        .no-images {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-light);
+            font-size: 1.2rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>{{ property.address }}</h1>
+        <p>${{ "{:,.2f}".format(property.price) }}</p>
+    </header>
+
+    <div class="container">
+        <div class="disclosure">
+            <strong>Transparency Notice:</strong> In accordance with CA AB 723, certain images have been digitally altered. Original unedited source files are available for transparency and compliance review.
+        </div>
+
+        {% if image_pairs %}
+            <div class="gallery">
+                {% for pair in image_pairs %}
+                <div class="image-pair-card">
+                    <div class="images-container">
+                        <div class="image-box">
+                            <img src="/{{ pair.original_url }}" alt="Original Property Image">
+                            <span class="image-label">Original Unedited</span>
+                        </div>
+                        <div class="image-box">
+                            <img src="/{{ pair.edited_url }}" alt="Edited Property Image">
+                            <span class="image-label">Digitally Altered</span>
+                        </div>
+                    </div>
+                    <div class="pair-details">
+                        <div class="detail-item">
+                            <h4>Alteration Type</h4>
+                            <p>{{ pair.alteration_type }}</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Structural Change</h4>
+                            <p>
+                                {% if pair.is_structural_change %}
+                                    <span class="status-badge structural-yes">Yes</span>
+                                {% else %}
+                                    <span class="status-badge structural-no">No</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>AI Confidence Score</h4>
+                            <p>{{ "{:.1f}%".format(pair.ai_confidence_score * 100) }}</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Compliance ID</h4>
+                            <p>{{ pair.compliance_id }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-images">
+                No compliance images have been uploaded for this property yet.
+            </div>
+        {% endif %}
+    </div>
+
+    <footer class="footer">
+        <div class="realtor-info">
+            <h3>Presented by Realtor #{{ property.realtor_id }}</h3>
+            <p>License: {{ realtor_license_number }}</p>
+        </div>
+        <div class="realtor-logo">
+            {% if realtor_logo_url %}
+                <img src="{{ realtor_logo_url }}" alt="Realtor Logo" class="logo">
+            {% else %}
+                <div style="font-size: 1.5rem; color: var(--accent); font-weight: bold; letter-spacing: 2px;">LUXE REALTY</div>
+            {% endif %}
+        </div>
+    </footer>
+
+</body>
+</html>
