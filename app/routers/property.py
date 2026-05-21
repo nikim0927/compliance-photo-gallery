@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import shutil
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from app.models.schemas import Property, PropertyCreate, ImagePair, ImagePairCreate
+from app.models.schemas import Property, PropertyCreate, ImagePair, ImagePairCreate, ImagePairResponse
 from app.database import models
 from app.database.connection import get_db
 
@@ -35,6 +37,51 @@ def upload_image_pair(property_id: int, image_pair: ImagePairCreate, db: Session
     db.commit()
     db.refresh(db_image_pair)
     return db_image_pair
+
+@router.post("/{property_id}/upload-files", response_model=ImagePairResponse)
+def upload_image_files(
+    property_id: int,
+    original_file: UploadFile = File(...),
+    edited_file: UploadFile = File(...),
+    alteration_type: str = Form(...),
+    is_structural_change: bool = Form(...),
+    ai_confidence_score: float = Form(...),
+    compliance_id: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    if not (0 <= ai_confidence_score <= 1):
+        raise HTTPException(status_code=400, detail="ai_confidence_score must be between 0 and 1")
+
+    db_property = db.query(models.Property).filter(models.Property.id == property_id).first()
+    if db_property is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    os.makedirs("uploads", exist_ok=True)
+    
+    orig_path = f"uploads/{original_file.filename}"
+    with open(orig_path, "wb") as buffer:
+        shutil.copyfileobj(original_file.file, buffer)
+        
+    edit_path = f"uploads/{edited_file.filename}"
+    with open(edit_path, "wb") as buffer:
+        shutil.copyfileobj(edited_file.file, buffer)
+
+    db_image_pair = models.ImagePair(
+        property_id=property_id,
+        original_url=orig_path,
+        edited_url=edit_path,
+        alteration_type=alteration_type,
+        is_structural_change=is_structural_change,
+        ai_confidence_score=ai_confidence_score,
+        compliance_id=compliance_id
+    )
+    db.add(db_image_pair)
+    db.commit()
+    db.refresh(db_image_pair)
+    
+    disclosure = "In accordance with CA AB 723, certain images have been digitally altered. Original unedited source files are available for transparency and compliance review."
+    
+    return {"image_pair": db_image_pair, "disclosure": disclosure}
 
 @router.get("/{property_id}/image-pairs", response_model=list[ImagePair])
 def get_image_pairs(property_id: int, db: Session = Depends(get_db)):

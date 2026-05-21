@@ -15,6 +15,10 @@ class ImagePair(ImagePairCreate):
     class Config:
         from_attributes = True
 
+class ImagePairResponse(BaseModel):
+    image_pair: ImagePair
+    disclosure: str
+
 class PropertyCreate(BaseModel):
     address: str
     realtor_id: int
