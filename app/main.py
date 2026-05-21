@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from app.routers import property
+from app.database.connection import engine, Base
+from app.database import models
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Compliance Photo Gallery API",
